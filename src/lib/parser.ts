@@ -16,28 +16,52 @@ const generateId = () => Math.random().toString(36).substring(2, 9);
  * @returns An array of structured Component objects.
  */
 export function decomposeJSX(rawCode: string): Component[] {
-    
-    // Extract the return (...) JSX
+    let innerJSX = '';
+
+    // Try to extract JSX from function component first
     const componentRegex = /return\s*\(([^]*?)\)\s*;\s*\}/;
     const match = rawCode.match(componentRegex);
-    if (!match || !match[1]) {
-        console.error("Parser Error: Could not find or extract GeneratedUI content. Raw output was:", rawCode);
-        const errorComponent: Component = {
-            id: generateId(),
-            name: "ErrorFallback",
-            code: `<div className=\"text-red-500 p-8 border border-red-500 bg-red-900 rounded-lg text-center\"><p className=\"text-lg font-bold\">Parsing Failed: LLM Output Structure Error</p><p className=\"text-sm mt-2\">The AI output was malformed. Please try again or simplify the prompt.</p></div>`,
-            elementType: 'div',
-            lastUpdated: new Date(),
-        };
-        return [errorComponent];
+    
+    if (match && match[1]) {
+        // Found a function component, extract its JSX
+        innerJSX = match[1].trim();
+    } else {
+        // No function component found, check if it's a direct JSX element
+        const jsxPattern = /^\s*<[^>]+>[^]*<\/[^>]+>\s*$/;
+        const isSingleElement = jsxPattern.test(rawCode.trim());
+        
+        if (isSingleElement) {
+            // It's a direct JSX element
+            innerJSX = rawCode.trim();
+        } else {
+            console.error("Parser Error: Input is neither a function component nor a valid JSX element:", rawCode);
+            const errorComponent: Component = {
+                id: generateId(),
+                name: "ErrorFallback",
+                code: `<div className=\"text-red-500 p-8 border border-red-500 bg-red-900 rounded-lg text-center\"><p className=\"text-lg font-bold\">Parsing Failed: LLM Output Structure Error</p><p className=\"text-sm mt-2\">The AI output was malformed. Please try again or simplify the prompt.</p></div>`,
+                elementType: 'div',
+                lastUpdated: new Date(),
+            };
+            return [errorComponent];
+        }
     }
-    const innerJSX = match[1].trim();
 
-    // Use cheerio to parse the JSX/HTML and extract all elements with data-inkwell-id
+    // Use cheerio to parse the JSX/HTML and extract components, but handle nesting correctly
     const $ = load(innerJSX, { xmlMode: false });
     const components: Component[] = [];
-    $('[data-inkwell-id]').each((_, el) => {
-        const id = $(el).attr('data-inkwell-id') || generateId();
+
+    // Find ALL elements with data-inkwell-id
+    const $allElements = $('[data-inkwell-id]');
+    
+    // Process only root-level elements (those that aren't inside another data-inkwell-id element)
+    $allElements.each((_, el) => {
+        const $el = $(el);
+        // Skip if this element is inside another data-inkwell-id element
+        if ($el.parents('[data-inkwell-id]').length > 0) {
+            return;
+        }
+
+        const id = $el.attr('data-inkwell-id') || generateId();
         const tag = el.tagName || 'div';
         const code = $.html(el);
         components.push({
@@ -48,6 +72,7 @@ export function decomposeJSX(rawCode: string): Component[] {
             lastUpdated: new Date(),
         });
     });
+
     // If nothing found, fallback to root as before
     if (components.length === 0) {
         let id = generateId();

@@ -5,11 +5,7 @@ import { generateContent } from '@/lib/gemini';
 import { sanitizeCode } from '@/lib/sanitizer';
 import { decomposeJSX, assembleJSX } from '@/lib/parser';
 import { UIProject } from '@/lib/db-models'; 
-
-// --- CENTRALIZED SIMULATED DATABASE STATE ---
-let currentProject: UIProject | null = (global as any).currentProject || null; 
-const setSimulatedProject = (project: UIProject) => { currentProject = project; (global as any).currentProject = project; };
-// --- END SIMULATED DB UTILITY ---
+import { saveProject, loadProject, clearProject } from '@/lib/persist';
 
 // Define the structure of the incoming request body
 interface GenerateRequest {
@@ -73,6 +69,9 @@ export async function POST(req: Request) {
     .replace(/^export\s+\w+;?$/gm, '')
     .trim();
 
+  // 🛑 AUTO-FIX: Self-close common void elements for JSX compatibility (simple, safe version)
+  cleanedCode = cleanedCode.replace(/<(input|img|br|hr|meta|link|area|base|col|embed|source|track|wbr)([^/>]*?)>/g, '<$1$2 />');
+
   // Extract only the function GeneratedUI block if present
   const funcMatch = cleanedCode.match(/function\s+GeneratedUI\s*\([\s\S]*?\{([\s\S]*?)\n\}/m);
   if (funcMatch) {
@@ -120,14 +119,19 @@ export async function POST(req: Request) {
     createdAt: new Date(),
   };
     
-  // Set the new project state globally
-  setSimulatedProject(newProject);
+  // Save the new project state persistently
+  try {
+    await saveProject(newProject);
 
-  // 7. Return the project data
-  return NextResponse.json({ 
-    project: newProject,
-    fullCode: cleanedCode, // Use cleaned function for preview only
-  }, { status: 200 });
+    // 7. Return the project data
+    return NextResponse.json({ 
+      project: newProject,
+      fullCode: cleanedCode, // Use cleaned function for preview only
+    }, { status: 200 });
+  } catch (error) {
+    console.error("Failed to save project state:", error);
+    return NextResponse.json({ error: "Failed to save project state" }, { status: 500 });
+  }
 
   } catch (error) {
     console.error("API Route Error:", error);
@@ -137,9 +141,14 @@ export async function POST(req: Request) {
 
 // Optional: Add a GET route to retrieve the current project (for debugging/resuming)
 export async function GET() {
-    const currentProject = (global as any).currentProject;
+  try {
+    const currentProject = await loadProject();
     if (!currentProject) {
-        return NextResponse.json({ error: "No active project found." }, { status: 404 });
+      return NextResponse.json({ error: "No active project found." }, { status: 404 });
     }
     return NextResponse.json({ project: currentProject, fullCode: currentProject.fullCode }, { status: 200 });
+  } catch (error) {
+    console.error("Failed to load project:", error);
+    return NextResponse.json({ error: "Failed to load project state" }, { status: 500 });
+  }
 }

@@ -1,0 +1,25 @@
+{
+  "projectId": "ftctukd",
+  "title": "A modern login form with a dark mode header and a ",
+  "initialPrompt": "A modern login form with a dark mode header and a submit button.",
+  "components": [
+    {
+      "id": "login-container",
+      "name": "Div",
+      "code": "<div data-inkwell-id=\"login-container\">\n      <div data-inkwell-id=\"login-card\">\n        <div data-inkwell-id=\"login-header\">\n          <h2 data-inkwell-id=\"login-title\">Login</h2>\n        </div>\n        <form data-inkwell-id=\"login-form\">\n          <div data-inkwell-id=\"username-field\">\n            <label data-inkwell-id=\"username-label\">\n              Username\n            </label>\n            <input data-inkwell-id=\"username-input\" id=\"username\" type=\"text\" placeholder=\"Username\">\n          </div>\n          <div data-inkwell-id=\"password-field\">\n            <label data-inkwell-id=\"password-label\">\n              Password\n            </label>\n            <input data-inkwell-id=\"password-input\" id=\"password\" type=\"password\" placeholder=\"Password\">\n          </div>\n          <div data-inkwell-id=\"submit-button-container\">\n            <button data-inkwell-id=\"submit-button\" type=\"submit\">\n              Sign In\n            </button>\n            <a data-inkwell-id=\"forgot-password-link\" href=\"#\">\n              Forgot Password?\n            </a>\n          </div>\n        </form>\n      </div>\n    </div>",
+      "elementType": "div",
+      "lastUpdated": "2025-10-18T06:43:52.844Z"
+    }
+  ],
+  "fullCode": "\n        function GeneratedUI() {\n            return (\n                // Wrapper to center content and ensure full screen height\n                <div className=\"flex flex-col items-center justify-center min-h-screen p-8\">\n                    {/* 🛑 FINAL FIX: Adding h-auto and min-h-16 to guarantee dimensions */}\n                    <div className=\"w-full max-w-md h-auto min-h-16\"> \n                        <React.Fragment>\n                            <div data-inkwell-id=\"login-container\">\n      <div data-inkwell-id=\"login-card\">\n        <div data-inkwell-id=\"login-header\">\n          <h2 data-inkwell-id=\"login-title\">Login</h2>\n        </div>\n        <form data-inkwell-id=\"login-form\">\n          <div data-inkwell-id=\"username-field\">\n            <label data-inkwell-id=\"username-label\">\n              Username\n            </label>\n            <input data-inkwell-id=\"username-input\" id=\"username\" type=\"text\" placeholder=\"Username\">\n          </div>\n          <div data-inkwell-id=\"password-field\">\n            <label data-inkwell-id=\"password-label\">\n              Password\n            </label>\n            <input data-inkwell-id=\"password-input\" id=\"password\" type=\"password\" placeholder=\"Password\">\n          </div>\n          <div data-inkwell-id=\"submit-button-container\">\n            <button data-inkwell-id=\"submit-button\" type=\"submit\">\n              Sign In\n            </button>\n            <a data-inkwell-id=\"forgot-password-link\" href=\"#\">\n              Forgot Password?\n            </a>\n          </div>\n        </form>\n      </div>\n    </div>\n                        </React.Fragment>\n                    </div>\n                </div>\n            );\n        }\n    ",
+  "history": [
+    {
+      "timestamp": "2025-10-18T06:43:52.844Z",
+      "description": "Initial generation.",
+      "model": "gemini-2.5-pro",
+      "patchId": "initial"
+    }
+  ],
+  "status": "draft",
+  "createdAt": "2025-10-18T06:43:52.844Z"
+}

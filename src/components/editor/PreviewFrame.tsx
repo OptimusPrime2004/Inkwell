@@ -94,12 +94,21 @@ const createIFrameContent = (jsxContent: string) => {
             if (typeof GeneratedUI === 'function') {
               root.render(<GeneratedUI />);
             } else {
-              throw new Error('GeneratedUI function is not defined. The AI output may be malformed or missing the function.');
+              // Render a visible error fallback in the preview
+              root.render(
+                React.createElement('div', {
+                  style: {
+                    color: '#fff', background: '#b91c1c', padding: '2rem', borderRadius: '1rem', fontWeight: 'bold', fontSize: '1.2rem', textAlign: 'center',
+                  }
+                },
+                  'Preview Error: GeneratedUI function is not defined. The AI output may be malformed or missing the function.'
+                )
+              );
             }
           } catch (err) {
             const overlay = document.getElementById('error-overlay');
             overlay.style.display = 'flex';
-            overlay.innerHTML = '<div><b>Preview Error:</b><br>' + (err && err.message ? err.message : err) + '</div>';
+            overlay.innerHTML = '<div style="color:#fff;background:#b91c1c;padding:2rem;border-radius:1rem;font-weight:bold;font-size:1.2rem;text-align:center;">Preview Error:<br>' + (err && err.message ? err.message : err) + '</div>';
           }
         </script>
         <script>
@@ -118,7 +127,7 @@ const createIFrameContent = (jsxContent: string) => {
 export const PreviewFrame = forwardRef<HTMLIFrameElement, PreviewFrameProps>(({ jsxCode }, ref) => {
   // We use the useIFrameComms hook to access the last clicked element ID
   const { lastClickedElementId } = useIFrameComms();
-  
+
   // If no code, show a placeholder screen
   if (!jsxCode) {
     return (
@@ -130,19 +139,28 @@ export const PreviewFrame = forwardRef<HTMLIFrameElement, PreviewFrameProps>(({ 
     );
   }
 
+  // Detect PATCH ERROR in the code
+  const patchError = jsxCode.includes('PATCH ERROR');
+
   // Generate the full HTML content string
   const htmlContent = createIFrameContent(jsxCode);
 
   return (
     <div className="relative w-full h-full bg-gray-800 rounded-lg shadow-xl">
       <iframe
-        ref={ref} // ⬅️ The fix: The forwarded ref is passed to the internal <iframe>
+        ref={ref}
         srcDoc={htmlContent}
         className="w-full h-full border-none rounded-lg"
-        // CRITICAL SECURITY: Sandboxing
         sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
         title="AI UI Preview Sandbox"
       />
+      {patchError && (
+        <div className="absolute inset-0 flex items-center justify-center bg-red-900 bg-opacity-80 z-50 pointer-events-none">
+          <div className="text-white text-lg font-bold p-6 rounded-lg border border-red-400 shadow-xl">
+            ⚠️ Patch Error: Gemini output was invalid.<br />Previous code retained. Please try a different edit prompt.
+          </div>
+        </div>
+      )}
       {lastClickedElementId && (
         <div className="absolute top-2 right-2 p-2 bg-yellow-500 text-sm font-semibold text-gray-900 rounded-md">
           Editing: {lastClickedElementId}
